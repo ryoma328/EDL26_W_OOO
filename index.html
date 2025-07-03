@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오.운.완 개인 대시보드</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .user-info {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .login-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-section input {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            margin: 10px;
+            width: 250px;
+        }
+
+        .login-section button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .login-section button:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-section button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: 400px;
+            position: relative;
+        }
+
+        .chart-title {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .recent-activities {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+
+        .activity-item:hover {
+            background-color: #f8f9ff;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-type {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .streak-badge {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 25px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .error-message {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .login-section input {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏃‍♂️ 오.운.완 개인 대시보드</h1>
+            <p>오늘도 운동 완료! 당신의 운동 여정을 확인해보세요</p>
+        </div>
+
+        <div id="loginSection" class="login-section">
+            <h2>로그인</h2>
+            <p>이메일을 입력하여 개인 대시보드를 확인하세요</p>
+            <br>
+            <input type="email" id="emailInput" placeholder="등록한 이메일을 입력하세요">
+            <br><br>
+            <button id="loginButton">대시보드 보기</button>
+            <br><br>
+            <p style="color: #666; font-size: 0.9em;">
+                * 실제 구글 시트 데이터와 연동되었습니다!<br>
+                등록된 이메일로 로그인하여 개인별 운동 현황을 확인하세요
+            </p>
+        </div>
+
+        <div id="dashboardSection" class="hidden">
+            <div class="user-info">
+                <div>
+                    <h2 id="userName">사용자님</h2>
+                    <p id="userEmail"></p>
+                </div>
+                <div>
+                    <button onclick="showAllMembers()" style="background: linear-gradient(45deg, #28a745, #20c997); color: white; border: none; padding: 10px 20px; border-radius: 10px; margin-right: 10px; cursor: pointer;">
+                        👥 전체 현황
+                    </button>
+                    <div class="streak-badge" id="streakBadge">
+                        🔥 1일 연속 운동 중!
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalDays">1</div>
+                    <div class="stat-label">총 운동일수</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="thisMonth">1</div>
+                    <div class="stat-label">이번 달 운동</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="favoriteExercise">운동</div>
+                    <div class="stat-label">가장 많이 한 운동</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="currentStreak">1</div>
+                    <div class="stat-label">연속 운동일</div>
+                </div>
+            </div>
+
+            <div class="charts-section">
+                <div class="chart-container">
+                    <div class="chart-title">운동 종류별 통계</div>
+                    <div class="chart-wrapper">
+                        <canvas id="exerciseChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">월별 운동 현황</div>
+                    <div class="chart-wrapper">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recent-activities">
+                <div class="chart-title">최근 운동 기록</div>
+                <div id="recentActivitiesList">
+                    <!-- 동적으로 생성됩니다 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 전체 회원 현황 섹션 -->
+        <div id="allMembersSection" class="hidden">
+            <div class="user-info">
+                <div>
+                    <h2>👥 전체 회원 운동 현황</h2>
+                    <p id="membersSummary">총 회원: 0명, 총 운동 횟수: 0회</p>
+                </div>
+                <div>
+                    <button onclick="goBackToPersonal()" style="background: linear-gradient(45deg, #6c757d, #495057); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer;">
+                        ← 개인 현황
+                    </button>
+                </div>
+            </div>
+
+            <div class="recent-activities">
+                <div class="chart-title">전체 회원 운동 현황</div>
+                <div style="overflow-x: auto;">
+                    <table id="membersTable" style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                        <thead>
+                            <tr style="background: linear-gradient(45deg, #667eea, #764ba2); color: white;">
+                                <th style="padding: 15px; text-align: left; border: 1px solid #ddd;">순위</th>
+                                <th style="padding: 15px; text-align: left; border: 1px solid #ddd;">이름</th>
+                                <th style="padding: 15px; text-align: left; border: 1px solid #ddd;">주요 운동</th>
+                                <th style="padding: 15px; text-align: center; border: 1px solid #ddd;">총 운동 횟수</th>
+                                <th style="padding: 15px; text-align: left; border: 1px solid #ddd;">운동 종류별 횟수</th>
+                                <th style="padding: 15px; text-align: center; border: 1px solid #ddd;">최근 운동일</th>
+                            </tr>
+                        </thead>
+                        <tbody id="membersTableBody">
+                            <!-- 동적으로 생성됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Google Apps Script 웹앱 URL (실제 배포된 URL로 변경하세요)
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbznELAWoFpoHQ0knouZGh7GDYrNtbVL1HBlV4WXUdSLto9sh_Sdkjj1jvC0MK7yIGh9Gg/exec';
+        
+        // 차트 인스턴스 저장용
+        let exerciseChartInstance = null;
+        let monthlyChartInstance = null;
+
+        async function loadDashboard() {
+            const email = document.getElementById('emailInput').value;
+            
+            console.log('loadDashboard 함수 시작, 이메일:', email);
+            
+            if (!email) {
+                alert('이메일을 입력해주세요.');
+                return;
+            }
+
+            // 로딩 표시
+            const button = document.getElementById('loginButton');
+            const originalText = button.textContent;
+            button.textContent = '로딩 중...';
+            button.disabled = true;
+
+            console.log('데이터 요청 시작...');
+            console.log('사용할 URL:', GAS_WEB_APP_URL);
+
+            try {
+                const userData = await fetchUserData(email);
+                console.log('받은 데이터:', userData);
+
+                if (userData.error) {
+                    console.error('서버에서 오류 반환:', userData.error);
+                    showError(userData.error);
+                    return;
+                }
+                
+                // UI 업데이트
+                console.log('UI 업데이트 시작...');
+                updateDashboardUI(userData, email);
+                
+            } catch (error) {
+                console.error('데이터 로딩 오류:', error);
+                showError(`데이터를 불러오는 중 오류가 발생했습니다: ${error.message}`);
+            } finally {
+                // 로딩 완료
+                button.textContent = originalText;
+                button.disabled = false;
+                console.log('로딩 완료');
+            }
+        }
+
+        async function fetchUserData(email) {
+            const url = `${GAS_WEB_APP_URL}?email=${encodeURIComponent(email)}`;
+            console.log('요청 URL:', url);
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                mode: 'cors'
+            });
+            
+            console.log('응답 상태:', response.status, response.statusText);
+            
+            if (!response.ok) {
+                throw new Error(`서버 응답 오류: ${response.status} ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            return data;
+        }
+
+        function showError(message) {
+            const loginSection = document.getElementById('loginSection');
+            
+            // 기존 에러 메시지 제거
+            const existingError = loginSection.querySelector('.error-message');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // 새 에러 메시지 추가
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            loginSection.appendChild(errorDiv);
+        }
+
+        function updateDashboardUI(userData, email) {
+            // UI 표시 전환
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            
+            // 사용자 정보 업데이트
+            document.getElementById('userName').textContent = userData.name + '님';
+            document.getElementById('userEmail').textContent = email;
+            
+            // 통계 업데이트
+            document.getElementById('totalDays').textContent = userData.totalDays;
+            document.getElementById('thisMonth').textContent = userData.thisMonth;
+            document.getElementById('favoriteExercise').textContent = userData.favoriteExercise;
+            document.getElementById('currentStreak').textContent = userData.currentStreak;
+            
+            // 연속 운동일 배지 업데이트
+            const streakText = userData.currentStreak > 0 
+                ? `🔥 ${userData.currentStreak}일 연속 운동 중!`
+                : '💪 오늘부터 다시 시작해요!';
+            document.getElementById('streakBadge').textContent = streakText;
+
+            // 최근 활동 목록 업데이트
+            updateRecentActivities(userData.recentActivities);
+
+            // 차트 생성
+            createExerciseChart(userData.exerciseTypes);
+            createMonthlyChart(userData.monthlyData);
+        }
+
+        function updateRecentActivities(activities) {
+            const container = document.getElementById('recentActivitiesList');
+            container.innerHTML = '';
+            
+            if (!activities || activities.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">아직 운동 기록이 없습니다.</p>';
+                return;
+            }
+            
+            activities.forEach(activity => {
+                const activityDiv = document.createElement('div');
+                activityDiv.className = 'activity-item';
+                activityDiv.innerHTML = `
+                    <div>
+                        <span class="activity-type">${activity.type}</span>
+                        <span style="margin-left: 15px;">${activity.description}</span>
+                    </div>
+                    <div style="color: #666;">${activity.date}</div>
+                `;
+                container.appendChild(activityDiv);
+            });
+        }
+
+        function createExerciseChart(exerciseData) {
+            const ctx = document.getElementById('exerciseChart').getContext('2d');
+            
+            // 기존 차트가 있다면 삭제
+            if (exerciseChartInstance) {
+                exerciseChartInstance.destroy();
+            }
+            
+            if (!exerciseData || Object.keys(exerciseData).length === 0) {
+                ctx.font = '16px Arial';
+                ctx.fillStyle = '#666';
+                ctx.textAlign = 'center';
+                ctx.fillText('운동 데이터가 없습니다', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
+            
+            exerciseChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(exerciseData),
+                    datasets: [{
+                        data: Object.values(exerciseData),
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb',
+                            '#f5576c',
+                            '#4facfe',
+                            '#43e97b',
+                            '#fa709a',
+                            '#ff9a9e',
+                            '#a8edea',
+                            '#fed6e3'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createMonthlyChart(monthlyData) {
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            
+            // 기존 차트가 있다면 삭제
+            if (monthlyChartInstance) {
+                monthlyChartInstance.destroy();
+            }
+            
+            // 데이터 길이에 맞춰 라벨 생성 (최근 2개월만)
+            const today = new Date();
+            const labels = [];
+            const dataLength = monthlyData ? monthlyData.length : 2;
+            
+            for (let i = dataLength - 1; i >= 0; i--) {
+                const targetDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                const monthLabel = targetDate.toLocaleDateString('ko-KR', { month: 'long' });
+                labels.push(monthLabel);
+            }
+            
+            console.log('월별 차트 라벨:', labels);
+            console.log('월별 차트 데이터:', monthlyData);
+            console.log('데이터 길이:', dataLength);
+            
+            if (!monthlyData || monthlyData.length === 0) {
+                ctx.font = '16px Arial';
+                ctx.fillStyle = '#666';
+                ctx.textAlign = 'center';
+                ctx.fillText('월별 데이터가 없습니다', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
+            
+            monthlyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels, // 데이터 길이에 맞춘 라벨
+                    datasets: [{
+                        label: '월별 운동 횟수',
+                        data: monthlyData,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            },
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 전체 회원 현황 보기
+        async function showAllMembers() {
+            console.log('전체 회원 현황 요청 시작');
+            
+            try {
+                const membersData = await fetchAllMembersData();
+                console.log('전체 회원 데이터:', membersData);
+                
+                if (membersData.error) {
+                    alert('전체 회원 데이터를 불러오는 중 오류가 발생했습니다: ' + membersData.error);
+                    return;
+                }
+                
+                // 전체 회원 현황 화면으로 전환
+                document.getElementById('dashboardSection').classList.add('hidden');
+                document.getElementById('allMembersSection').classList.remove('hidden');
+                
+                // 요약 정보 업데이트
+                document.getElementById('membersSummary').textContent = 
+                    `총 회원: ${membersData.totalMembers}명, 총 운동 횟수: ${membersData.totalExercises}회`;
+                
+                // 테이블 업데이트
+                updateMembersTable(membersData.members);
+                
+            } catch (error) {
+                console.error('전체 회원 데이터 로딩 오류:', error);
+                alert('전체 회원 데이터를 불러오는 중 오류가 발생했습니다.');
+            }
+        }
+
+        async function fetchAllMembersData() {
+            const url = `${GAS_WEB_APP_URL}?action=getAllMembers`;
+            console.log('전체 회원 요청 URL:', url);
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                mode: 'cors'
+            });
+            
+            console.log('전체 회원 응답 상태:', response.status, response.statusText);
+            
+            if (!response.ok) {
+                throw new Error(`서버 응답 오류: ${response.status} ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            return data;
+        }
+
+        function updateMembersTable(members) {
+            const tbody = document.getElementById('membersTableBody');
+            tbody.innerHTML = '';
+            
+            if (!members || members.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #666;">등록된 회원이 없습니다.</td></tr>';
+                return;
+            }
+            
+            members.forEach((member, index) => {
+                const row = document.createElement('tr');
+                row.style.borderBottom = '1px solid #eee';
+                row.style.transition = 'background-color 0.2s';
+                
+                // 순위에 따른 배경색
+                let rankStyle = '';
+                if (index === 0) rankStyle = 'background: linear-gradient(45deg, #ffd700, #ffed4a); color: #333;'; // 금메달
+                else if (index === 1) rankStyle = 'background: linear-gradient(45deg, #c0c0c0, #e2e8f0); color: #333;'; // 은메달
+                else if (index === 2) rankStyle = 'background: linear-gradient(45deg, #cd7f32, #d69e2e); color: white;'; // 동메달
+                
+                // 운동 종류별 횟수 문자열 생성
+                const exerciseDetails = Object.entries(member.exercises)
+                    .map(([exercise, count]) => `${exercise}(${count})`)
+                    .join(', ');
+                
+                row.innerHTML = `
+                    <td style="padding: 15px; border: 1px solid #ddd; text-align: center; ${rankStyle}">
+                        ${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                    </td>
+                    <td style="padding: 15px; border: 1px solid #ddd; font-weight: bold;">
+                        ${member.name}
+                    </td>
+                    <td style="padding: 15px; border: 1px solid #ddd;">
+                        <span style="background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.9em;">
+                            ${member.favoriteExercise}
+                        </span>
+                    </td>
+                    <td style="padding: 15px; border: 1px solid #ddd; text-align: center; font-weight: bold; color: #667eea; font-size: 1.2em;">
+                        ${member.totalCount}회
+                    </td>
+                    <td style="padding: 15px; border: 1px solid #ddd; font-size: 0.9em;">
+                        ${exerciseDetails}
+                    </td>
+                    <td style="padding: 15px; border: 1px solid #ddd; text-align: center; color: #666;">
+                        ${member.lastExerciseDate || '-'}
+                    </td>
+                `;
+                
+                // 호버 효과
+                row.addEventListener('mouseover', function() {
+                    if (index > 2) this.style.backgroundColor = '#f8f9ff';
+                });
+                row.addEventListener('mouseout', function() {
+                    if (index > 2) this.style.backgroundColor = '';
+                });
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function goBackToPersonal() {
+            document.getElementById('allMembersSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('오.운.완 대시보드가 로드되었습니다.');
+            console.log('Apps Script URL:', GAS_WEB_APP_URL);
+            
+            // URL 유효성 검사
+            if (GAS_WEB_APP_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE' || 
+                !GAS_WEB_APP_URL.includes('script.google.com')) {
+                console.error('⚠️ 웹앱 URL이 설정되지 않았습니다!');
+                showError('웹앱 URL이 설정되지 않았습니다. 개발자에게 문의하세요.');
+            }
+
+            // 버튼 이벤트 리스너 추가
+            const loginButton = document.getElementById('loginButton');
+            if (loginButton) {
+                loginButton.addEventListener('click', loadDashboard);
+            }
+
+            // 엔터키 이벤트 리스너 추가
+            const emailInput = document.getElementById('emailInput');
+            if (emailInput) {
+                emailInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        loadDashboard();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
